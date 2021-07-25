@@ -30,8 +30,8 @@
                     <input name="{{ data[0] }}" type="radio" value="1" onclick="set_is_run('{{ data[0] }}', 1)">启用
                     <input name="{{ data[0] }}" type="radio" value="0" checked onclick="set_is_run('{{ data[0] }}', 0)">禁用
                     {% endif %}
-                    <a href="#" onclick="edit('edit/{{ data[0] }}')" style="margin-left: 2%;">编辑</a>
-                    <a href="#" onclick="openResult('delete/{{ data[0] }}')" style="margin-left: 2%;">删除</a>
+                    <a href="#" onclick="edit('{{ context }}/edit/{{ data[0] }}')" style="margin-left: 2%;">编辑</a>
+                    <a href="#" onclick="openResult('{{ context }}/delete/{{ data[0] }}')" style="margin-left: 2%;">删除</a>
                 </td>
             </tr>
         {% endfor %}
@@ -86,7 +86,7 @@
     $("#Reload").click(function () {
         $.ajax ({
             type: 'get',
-            url: 'reload',
+            url: '{{ context }}/reload',
             datatype: 'json',
             success: function(data) {
                 if(data['code'] === 0) {
@@ -115,7 +115,7 @@
         };
         $.ajax({
             type: 'post',
-            url: 'save',
+            url: '{{ context }}/save',
             data: postdata,
             datatype: 'json',
             success: function (data) {
@@ -124,7 +124,7 @@
                     $.Toast(data['msg'], 'error');
                 } else {
                     $.Toast(data['msg'], 'success');
-                    window.location.href="/";
+                    window.location.href="";
                 }
             },
         });
@@ -148,7 +148,7 @@
         };
         $.ajax({
             type: 'post',
-            url: 'update',
+            url: '{{ context }}/update',
             data: postdata,
             datatype: 'json',
             success: function (data) {
@@ -157,7 +157,7 @@
                     $.Toast(data['msg'], 'error');
                 } else {
                     $.Toast(data['msg'], 'success');
-                    window.location.href="/";
+                    window.location.href="";
                 }
             },
         });
@@ -169,7 +169,7 @@
         }
         $.ajax({
             type: 'post',
-            url: 'isRun',
+            url: '{{ context }}/isRun',
             data: post_data,
             datatype: 'json',
             success: function(data){
@@ -178,7 +178,7 @@
                     $.Toast(data['msg'], 'error');
                 } else {
                     $.Toast(data['msg'], 'success');
-                    window.location.href="/";
+                    window.location.href="";
                 }
             }
         })
@@ -196,7 +196,7 @@
                         $.Toast(data['msg'], 'error');
                     } else {
                         $.Toast(data['msg'], 'success');
-                        window.location.href="/";
+                        window.location.href="";
                     }
                 }
             })
@@ -221,7 +221,7 @@
                     document.getElementById('url_path').value = data['data'][3];
                     document.getElementById('status_code').value = data['data'][4];
                     document.getElementById('response').value = data['data'][5];
-                    document.getElementById('is_file').value = data['data'][7];
+                    document.getElementById('is_file').value = data['data'][6];
                     document.getElementById('Save').style.display = 'none';
                     document.getElementById('Update').style.display = '';
                 }

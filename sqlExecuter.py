@@ -5,6 +5,7 @@
 import time
 from sqlite import Sqlite
 from config import getConfig
+from logger import logger
 
 
 table_name = getConfig('table_name')
@@ -29,6 +30,7 @@ def isRun(data):
     is_run = data.get('isRun')
     sql_con.cur.execute(UPDATE_SQL.format(table_name, f'is_valid = {is_run}, update_time = {int(time.time())}', ID))
     sql_con.con.commit()
+    logger.info(f'{ID} 设置为 {is_run}')
     del sql_con
 
 
@@ -36,6 +38,7 @@ def delete(ID):
     sql_con = Sqlite()
     sql_con.cur.execute(DELETE_SQL.format(table_name, ID))
     sql_con.con.commit()
+    logger.info(f'{ID} 删除成功')
     del sql_con
 
 
@@ -60,6 +63,7 @@ def save(data):
                    is_file, is_valid, int(time.time()))
     sql_con.cur.execute(INSERT_SQL.format(table_name, insert_date))
     sql_con.con.commit()
+    logger.info(f'{name}保存成功')
     del sql_con
 
 
@@ -78,6 +82,7 @@ def update(data):
 
     sql_con.cur.execute(UPDATE_SQL.format(table_name, update_date, ID))
     sql_con.con.commit()
+    logger.info(f'{ID}更新成功')
     del sql_con
 
 

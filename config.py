@@ -10,4 +10,7 @@ cfg.read('config.ini', encoding='utf-8')
 
 
 def getConfig(key):
-    return cfg.get('config', key, fallback=None)
+    if key == 'backupCount':
+        return cfg.getint('config', key, fallback=7)
+    else:
+        return cfg.get('config', key, fallback=None)

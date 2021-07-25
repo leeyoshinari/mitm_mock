@@ -23,7 +23,7 @@ git clone https://github.com/leeyoshinari/mitm_mock.git
 
 2、修改配置文件`config.ini`
 
-3、安装依赖包  `pip install -r requirements.txt`
+3、安装依赖包  `pip3 install -r requirements.txt`
 
 4、启动 `python3 mitm.py`
 

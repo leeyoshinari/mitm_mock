@@ -6,6 +6,7 @@ import os
 import re
 import time
 import asyncio
+import traceback
 import threading
 import urllib.parse
 import mitmproxy.http
@@ -19,6 +20,7 @@ import jinja2
 import aiohttp_jinja2
 from aiohttp import web
 from config import getConfig
+from logger import logger
 import sqlExecuter
 
 
@@ -31,7 +33,8 @@ class SERVER(object):
 
     @staticmethod
     async def home(request):
-        return aiohttp_jinja2.render_template('home.html', request, context={'datas': sqlExecuter.home(request)})
+        return aiohttp_jinja2.render_template('home.html', request, context={'datas': sqlExecuter.home(request),
+                                                                             'context': getConfig('context')})
 
     @staticmethod
     async def isRun(request):
@@ -121,6 +124,7 @@ class RequestEvent(object):
             url_path = flow.request.path
             # url_params = flow.request.get_text()
 
+        logger.info(f'{request_method} - {domain_name} - {url_path}')
         data = self.intercept(domain_name, url_path)
         if data:
             flow.response = http.HTTPResponse.make(status_code=data['status_code'], content=data['content'])
@@ -137,30 +141,33 @@ class RequestEvent(object):
         :param url_path:
         :return:
         """
-        flag = 0
+        flag = 0    # Whether match mitm rule
         index = 0
-        for i in range(len(self._data)):
-            rule = self._data[i]
-            index = i
-            if rule[2] and rule[3]:
-                if self.recompile(rule[2], domain_name):
-                    flag = 1
-                    break
-                elif self.recompile(rule[3], url_path):
-                    flag = 1
-                    break
+        try:
+            for i in range(len(self._data)):
+                rule = self._data[i]
+                index = i
+                if rule[2] and rule[3]:
+                    if self.recompile(rule[2], domain_name):
+                        flag = 1
+                        break
+                    elif self.recompile(rule[3], url_path):
+                        flag = 1
+                        break
+                    else:
+                        continue
+                elif rule[2] and not rule[3]:
+                    if self.recompile(rule[2], domain_name):
+                        flag = 1
+                        break
+                elif rule[3] and not rule[2]:
+                    if self.recompile(rule[3], url_path):
+                        flag = 1
+                        break
                 else:
                     continue
-            elif rule[2] and not rule[3]:
-                if self.recompile(rule[2], domain_name):
-                    flag = 1
-                    break
-            elif rule[3] and not rule[2]:
-                if self.recompile(rule[3], url_path):
-                    flag = 1
-                    break
-            else:
-                continue
+        except Exception:
+            logger.error(traceback.format_exc())
 
         if flag:
             return self.return_response(self._data[index][4], self._data[index][5], self._data[index][6])
@@ -209,17 +216,17 @@ async def app_server(q):
     s = SERVER(q)
     app = web.Application()
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('templates'))  # Add template to search path
-    app.router.add_static('/static',
+    app.router.add_static(f'{getConfig("context")}/static',
                           path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static'),
                           append_version=True)  # Add static files to the search path
 
-    app.router.add_route('GET', '', s.home)
-    app.router.add_route('POST', '/isRun', s.isRun)
-    app.router.add_route('GET', '/delete/{Id}', s.delete)
-    app.router.add_route('GET', '/edit/{Id}', s.edit)
-    app.router.add_route('POST', '/update', s.update)
-    app.router.add_route('GET', '/reload', s.reload)
-    app.router.add_route('POST', '/save', s.save)
+    app.router.add_route('GET', f'{getConfig("context")}', s.home)
+    app.router.add_route('POST', f'{getConfig("context")}/isRun', s.isRun)
+    app.router.add_route('GET', f'{getConfig("context")}/delete/{{Id}}', s.delete)
+    app.router.add_route('GET', f'{getConfig("context")}/edit/{{Id}}', s.edit)
+    app.router.add_route('POST', f'{getConfig("context")}/update', s.update)
+    app.router.add_route('GET', f'{getConfig("context")}/reload', s.reload)
+    app.router.add_route('POST', f'{getConfig("context")}/save', s.save)
 
     runner = web.AppRunner(app)
     await runner.setup()
