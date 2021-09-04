@@ -22,14 +22,14 @@ log_level = {
 }
 
 logger = logging.getLogger()
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(threadName)s - %(filename)s[line:%(lineno)d] - %(message)s')
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(threadName)s:%(thread)d - %(filename)s[line:%(lineno)d] - %(message)s')
 logger.setLevel(level=log_level.get(LEVEL))
 
 file_handler = logging.handlers.TimedRotatingFileHandler(
     os.path.join(log_path, 'mitm.log'), when='midnight', interval=1, backupCount=backupcount)
 file_handler.suffix = '%Y-%m-%d.log'
 
-file_handler = logging.StreamHandler()
+# file_handler = logging.StreamHandler()
 
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)

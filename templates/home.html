@@ -116,8 +116,9 @@
         $.ajax({
             type: 'post',
             url: '{{ context }}/save',
-            data: postdata,
+            data: JSON.stringify(postdata),
             datatype: 'json',
+            contentType: 'application/json; charset=utf-8',
             success: function (data) {
                 if(data['code'] === 0) {
                     console.error(data['msg']);
@@ -149,8 +150,9 @@
         $.ajax({
             type: 'post',
             url: '{{ context }}/update',
-            data: postdata,
+            data: JSON.stringify(postdata),
             datatype: 'json',
+            contentType: 'application/json; charset=utf-8',
             success: function (data) {
                 if(data['code'] === 0) {
                     console.error(data['msg']);
@@ -170,8 +172,9 @@
         $.ajax({
             type: 'post',
             url: '{{ context }}/isRun',
-            data: post_data,
+            data: JSON.stringify(post_data),
             datatype: 'json',
+            contentType: 'application/json; charset=utf-8',
             success: function(data){
                 if(data['code'] === 0) {
                     console.error(data['msg']);

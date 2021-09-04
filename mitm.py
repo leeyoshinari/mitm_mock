@@ -5,6 +5,7 @@
 import os
 import re
 import time
+import json
 import asyncio
 import traceback
 import threading
@@ -12,8 +13,6 @@ import urllib.parse
 import mitmproxy.http
 from multiprocessing import Process, Queue
 from mitmproxy.options import Options
-from mitmproxy.proxy.config import ProxyConfig
-from mitmproxy.proxy.server import ProxyServer
 from mitmproxy.tools.dump import DumpMaster
 from mitmproxy import ctx, http
 import jinja2
@@ -39,7 +38,7 @@ class SERVER(object):
     @staticmethod
     async def isRun(request):
         try:
-            data = await request.post()
+            data = json.loads(await request.text())
             sqlExecuter.isRun(data)
             return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
         except Exception as err:
@@ -66,7 +65,7 @@ class SERVER(object):
     @staticmethod
     async def update(request):
         try:
-            data = await request.post()
+            data = json.loads(await request.text())
             sqlExecuter.update(data)
             return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
         except Exception as err:
@@ -75,7 +74,7 @@ class SERVER(object):
     @staticmethod
     async def save(request):
         try:
-            data = await request.post()
+            data = json.loads(await request.text())
             sqlExecuter.save(data)
             return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
         except Exception as err:
@@ -101,7 +100,7 @@ class RequestEvent(object):
     def get_queue(self):
         while True:
             self._data = self.q.get()
-            time.sleep(0.5)
+            time.sleep(1)
 
     def http_connect(self, flow: mitmproxy.http.HTTPFlow):
         """
@@ -115,6 +114,8 @@ class RequestEvent(object):
         # request_scheme = flow.request.scheme  # 请求协议
         request_method = flow.request.method  # 请求方式
         domain_name = flow.request.headers.get("Host")  # 域名
+        if not domain_name:
+            domain_name = flow.request.host
         if request_method == 'GET':
             url = flow.request.url      # url
             url_parse = urllib.parse.urlparse(url)      # 解析url
@@ -127,7 +128,7 @@ class RequestEvent(object):
         logger.info(f'{request_method} - {domain_name} - {url_path}')
         data = self.intercept(domain_name, url_path)
         if data:
-            flow.response = http.HTTPResponse.make(status_code=data['status_code'], content=data['content'])
+            flow.response = http.Response.make(status_code=data['status_code'], content=data['content'])
         else:
             pass
 
@@ -246,9 +247,7 @@ def main():
     process_1.start()
 
     options = Options(listen_host=getConfig('proxy_host'), listen_port=int(getConfig('proxy_port')), http2=True)
-    config = ProxyConfig(options)
     proxy = ProxyMaster(options, with_termlog=False, with_dumper=False)
-    proxy.server = ProxyServer(config)
     r_e = RequestEvent(q)
     proxy.addons.add(r_e)
     proxy.start_run()
