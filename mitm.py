@@ -238,8 +238,8 @@ class RequestEvent(object):
         try:
             return json.loads(data)
         except:
-            logger.error(data)
-            logger.error(traceback.format_exc())
+            # logger.error(data)
+            # logger.error(traceback.format_exc())
             return data
 
     @staticmethod
