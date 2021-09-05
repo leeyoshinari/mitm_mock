@@ -122,9 +122,10 @@ class RequestEvent(object):
         request_dict['query'] = self.decode_query(urllib.parse.unquote(url_parse.query))  # URL中的请求参数
         request_dict['fragment'] = url_parse.fragment
         data = flow.request.get_text()
-        request_dict['data'] = self.decode_query(data) if '&' in data else json.loads(data) # post请求的参数
+        request_dict['data'] = self.decode_data(data) if data else data # post请求的参数
 
-        logger.info(f'{request_dict["scheme"]} - {request_dict["method"]} - {request_dict["hostname"]} - {request_dict["path"]}')
+        logger.info(f'{request_dict["scheme"]} - {request_dict["method"]} - {request_dict["hostname"]}:'
+                    f'{request_dict["port"]} - {request_dict["path"]}')
         data = self.intercept(request_dict)
         if data:
             flow.response = http.Response.make(status_code=data['status_code'], content=data['content'])
@@ -186,8 +187,9 @@ class RequestEvent(object):
             else:
                 content = rule_data[5]
             try:
-                content = self.replace_param(json.loads(content), request_dict)
+                content = json.dumps(self.replace_param(json.loads(content), request_dict))
             except:
+                logger.error(content)
                 logger.error(traceback.format_exc())
 
         except Exception as err:
@@ -222,12 +224,23 @@ class RequestEvent(object):
     @staticmethod
     def decode_query(query: str):
         data = {}
+        if not query:
+            return data
         params = query.split('&')
         for param in params:
             k, v = param.split('=')
             data.update({k: v})
 
         return data
+
+    @staticmethod
+    def decode_data(data: str):
+        try:
+            return json.loads(data)
+        except:
+            logger.error(data)
+            logger.error(traceback.format_exc())
+            return data
 
     @staticmethod
     def recompile(pattern, string):

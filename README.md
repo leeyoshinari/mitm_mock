@@ -1,8 +1,8 @@
 # mitm_mock
-这是一个mock工具，原理是使用代理，拦截指定的http请求，然后直接返回响应值。<br>
+这是一个mock工具，原理是使用代理，拦截指定的http协议的请求，然后直接返回响应值。<br>
 
 ### 功能
-1、自定义http拦截规则，支持通过域名和url路径拦截<br>
+1、自定义http协议拦截规则，支持通过域名和url路径拦截<br>
 2、支持设置自定义响应的状态码<br>
 3、响应值可设置成任意字符串，支持设置读取本地文件的路径<br>
 4、修改规则后，支持手动加载使规则生效<br>
@@ -35,7 +35,7 @@ git clone https://github.com/leeyoshinari/mitm_mock.git
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Windows取消方法：直接在“手动设置代理”的地方关闭即可<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Linux取消方法：`unset http_proxy` <br>
 
-6、访问页面<br>
+6、访问页面 http://IP:PORT/context(配置文件中的context)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;添加/编辑拦截规则，使拦截规则生效<br>
 ![]()
 
@@ -49,7 +49,7 @@ pyinstaller -F mitm.py -p sqlite.py -p sqlExecuter.py -p config.py --hidden-impo
 # 注意
 1、每次mock时，需开启系统代理；mock完成后，须关闭代理；
 
-2、如果需要拦截（mock）https协议的请求，需要安装证书，其他操作和http协议的基本一样；证书在用户目录下的 .mitmproxy 文件夹中，安装 mitmproxy-ca-cert.cer。
+2、如果需要拦截（mock）https的请求，需要安装证书，其他操作和http的基本一样；证书在用户目录下的 .mitmproxy 文件夹中，安装 mitmproxy-ca-cert.cer。
 
 # Requirements
 1、mitmproxy<br>
