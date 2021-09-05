@@ -37,7 +37,7 @@ git clone https://github.com/leeyoshinari/mitm_mock.git
 
 6、访问页面 http://IP:PORT/context(配置文件中的context)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;添加/编辑拦截规则，使拦截规则生效<br>
-![]()
+![](https://github.com/leeyoshinari/mitm_mock/blob/main/static/shoot.jpg)
 
 # 打包
 使用pyinstaller打包，打包命令：
