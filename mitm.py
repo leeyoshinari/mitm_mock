@@ -111,22 +111,21 @@ class RequestEvent(object):
         pass
 
     def request(self, flow: mitmproxy.http.HTTPFlow):
-        # request_scheme = flow.request.scheme  # 请求协议
-        request_method = flow.request.method  # 请求方式
-        domain_name = flow.request.headers.get("Host")  # 域名
-        if not domain_name:
-            domain_name = flow.request.host
-        if request_method == 'GET':
-            url = flow.request.url      # url
-            url_parse = urllib.parse.urlparse(url)      # 解析url
-            url_path = url_parse.path  # 请求路径
-            # url_params = url_parse.query  # 请求参数，url传参
-        else:
-            url_path = flow.request.path
-            # url_params = flow.request.get_text()
+        request_dict = {'method': '', 'scheme': '', 'hostname': '', 'port': 80, 'path': '',
+                        'query': '', 'data': '', 'fragment': ''}
+        request_dict['method'] = flow.request.method  # 请求方式
+        url_parse = urllib.parse.urlparse(flow.request.url)      # 解析url
+        request_dict['scheme'] = url_parse.scheme   # 协议
+        request_dict['hostname'] = url_parse.hostname   # 域名
+        request_dict['port'] = flow.request.port    # 端口
+        request_dict['path'] = url_parse.path  # 请求路径
+        request_dict['query'] = self.decode_query(urllib.parse.unquote(url_parse.query))  # URL中的请求参数
+        request_dict['fragment'] = url_parse.fragment
+        data = flow.request.get_text()
+        request_dict['data'] = self.decode_query(data) if '&' in data else json.loads(data) # post请求的参数
 
-        logger.info(f'{request_method} - {domain_name} - {url_path}')
-        data = self.intercept(domain_name, url_path)
+        logger.info(f'{request_dict["scheme"]} - {request_dict["method"]} - {request_dict["hostname"]} - {request_dict["path"]}')
+        data = self.intercept(request_dict)
         if data:
             flow.response = http.Response.make(status_code=data['status_code'], content=data['content'])
         else:
@@ -135,7 +134,7 @@ class RequestEvent(object):
     def response(self, flow: mitmproxy.http.HTTPFlow):
         pass
 
-    def intercept(self, domain_name, url_path):
+    def intercept(self, request_dict):
         """
         拦截
         :param domain_name:
@@ -149,20 +148,20 @@ class RequestEvent(object):
                 rule = self._data[i]
                 index = i
                 if rule[2] and rule[3]:
-                    if self.recompile(rule[2], domain_name):
+                    if self.recompile(rule[2], request_dict["hostname"]):
                         flag = 1
                         break
-                    elif self.recompile(rule[3], url_path):
+                    elif self.recompile(rule[3], request_dict["path"]):
                         flag = 1
                         break
                     else:
                         continue
                 elif rule[2] and not rule[3]:
-                    if self.recompile(rule[2], domain_name):
+                    if self.recompile(rule[2], request_dict["hostname"]):
                         flag = 1
                         break
                 elif rule[3] and not rule[2]:
-                    if self.recompile(rule[3], url_path):
+                    if self.recompile(rule[3], request_dict["path"]):
                         flag = 1
                         break
                 else:
@@ -171,27 +170,64 @@ class RequestEvent(object):
             logger.error(traceback.format_exc())
 
         if flag:
-            return self.return_response(self._data[index][4], self._data[index][5], self._data[index][6])
+            return self.return_response(self._data[index], request_dict)
         else:
             return {}
 
-    @staticmethod
-    def return_response(status_code, response, is_file):
+    def return_response(self, rule_data, request_dict):
+        status_code = rule_data[4]
         if not status_code:
             status_code = 200
 
         try:
-            if is_file == 1:
-                with open(response, 'r', encoding='utf-8') as f:
+            if rule_data[6] == 1:
+                with open(rule_data[5], 'r', encoding='utf-8') as f:
                     content = f.read()
             else:
-                content = response
+                content = rule_data[5]
+            try:
+                content = self.replace_param(json.loads(content), request_dict)
+            except:
+                logger.error(traceback.format_exc())
+
         except Exception as err:
+            logger.error(traceback.format_exc())
             status_code = 500
             content = str(err)
 
         return {'status_code': status_code, 'content': content}
 
+    @staticmethod
+    def replace_param(content, request_dict):
+        """
+        修改mock的返回值
+        - 当响应值中的某个字段的值是变化的，需要和请求参数的值保持一致，则需要在这里处理；
+        - 当响应值中的ID或其他字段的值需要动态变化，每次响应都要是不一样的值，则需要在这里加处理逻辑；
+        :param content: 读取设置的返回值内容，是 dict or list
+        :param request_dict: 请求相关数据，request_dict['hostname'] 是域名
+                request_dict['path'] 是请求路径
+                request_dict['query'] 是URL中的请求参数，GET和POST请求都可能会带
+                request_dict['data'] 是POST请求的参数
+        :return: 修改后的返回值
+        """
+        try:
+            if request_dict['path'] == '':
+                # 在这里写 根据接口添加处理逻辑
+                pass
+        except:
+            logger.error(traceback.format_exc())
+
+        return content
+
+    @staticmethod
+    def decode_query(query: str):
+        data = {}
+        params = query.split('&')
+        for param in params:
+            k, v = param.split('=')
+            data.update({k: v})
+
+        return data
 
     @staticmethod
     def recompile(pattern, string):

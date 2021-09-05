@@ -49,7 +49,7 @@ pyinstaller -F mitm.py -p sqlite.py -p sqlExecuter.py -p config.py --hidden-impo
 # 注意
 1、每次mock时，需开启系统代理；mock完成后，须关闭代理；
 
-2、如果需要拦截（mock）https协议的请求，需要安装证书，其他操作和http协议的基本一样；
+2、如果需要拦截（mock）https协议的请求，需要安装证书，其他操作和http协议的基本一样；证书在用户目录下的 .mitmproxy 文件夹中，安装 mitmproxy-ca-cert.cer。
 
 # Requirements
 1、mitmproxy<br>

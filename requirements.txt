@@ -1,5 +1,4 @@
 aiohttp>=3.6.2
 aiohttp-jinja2>=1.2.0
 Jinja2>=2.11.2
-mitmproxy>=6.0.2
-msgpack>=1.0.2
+mitmproxy>=7.0
