@@ -29,6 +29,7 @@ class Sqlite(object):
               "status_code INTEGER," \
               "response TEXT," \
               "is_file INTEGER," \
+              "is_regular INTEGER," \
               "is_valid INTEGER," \
               "update_time INTEGER);".format(self.table_name)
         self.cur.execute(sql)

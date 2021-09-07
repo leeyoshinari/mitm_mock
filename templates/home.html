@@ -6,24 +6,24 @@
     <button id="Reload" style="width: 11%; float: right; margin-bottom: 2%;">立即生效</button>
     <table width="100%" border="1" cellspacing="0" cellpadding="6" align="center" id="monitor" style="table-layout: fixed;">
         <tr style="align: center; margin: auto; background-color: #99CCFF">
-            <th width=10% style="text-align: center;">ID</th>
-            <th width=10% style="text-align: center;">name</th>
+            <!--<th width=10% style="text-align: center;">ID</th>-->
+            <th width=13% style="text-align: center;">name</th>
             <th width=11% style="text-align: center;">domainName</th>
-            <th width=15% style="text-align: center;">urlPath</th>
+            <th width=17% style="text-align: center;">urlPath</th>
             <th width=10% style="text-align: center;">statusCode</th>
             <th width=24% style="text-align: center;">response</th>
             <th width=20% style="text-align: center;">manager</th>
         </tr>
         {% for data in datas %}
             <tr>
-                <td align="center" style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[0] }}">{{ data[0] }}</td>
+                <!--<td align="center" style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[0] }}">{{ data[0] }}</td>-->
                 <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[1] }}">{{ data[1] }}</td>
                 <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[2] }}">{{ data[2] }}</td>
                 <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[3] }}">{{ data[3] }}</td>
                 <td align="center">{{ data[4]}}</td>
                 <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[5] }}">{{ data[5]}}</td>
                 <td align="center">
-                    {% if data[7] > 0 %}
+                    {% if data[8] > 0 %}
                     <input name="{{ data[0] }}" type="radio" value="1" checked onclick="set_is_run('{{ data[0] }}', 1)">启用
                     <input name="{{ data[0] }}" type="radio" value="0" onclick="set_is_run('{{ data[0] }}', 0)">禁用
                     {% else %}
@@ -68,7 +68,11 @@
         </div>
         <div style="max-width: 100%; margin-top: 3%;">
             <label style="width: 25%; text-align: left;">响应值是否是文件: </label>
-            <input type="text" id="is_file" placeholder="响应值是否是文件, 0 或者 1" style="margin-left: 3%; width: 70%;">
+            <input type="text" id="is_file" placeholder="响应值是否是文件, 0是字符串 或者 1是文件路径" style="margin-left: 3%; width: 70%;">
+        </div>
+        <div style="max-width: 100%; margin-top: 3%;">
+            <label style="width: 25%; text-align: left;">是否正则匹配规则: </label>
+            <input type="text" id="is_re" placeholder="是否使用正则匹配域名或路径, 0 或者 1" style="margin-left: 3%; width: 70%;">
         </div>
         <div style="text-align: center; margin-top: 5%;">
             <button id="Save" style="width: 30%; display: ">保存</button>
@@ -105,6 +109,7 @@
         let status_code = document.getElementById('status_code').value;
         let response = document.getElementById('response').value;
         let is_file = document.getElementById('is_file').value;
+        let is_re = document.getElementById('is_re').value;
         let postdata = {
             name: name,
             domain_name: domain_name,
@@ -112,6 +117,7 @@
             status_code: status_code,
             response: response,
             is_file: is_file,
+            is_re: is_re,
         };
         $.ajax({
             type: 'post',
@@ -138,6 +144,7 @@
         let status_code = document.getElementById('status_code').value;
         let response = document.getElementById('response').value;
         let is_file = document.getElementById('is_file').value;
+        let is_re = document.getElementById('is_re').value;
         let postdata = {
             ID: ID,
             name: name,
@@ -146,6 +153,7 @@
             status_code: status_code,
             response: response,
             is_file: is_file,
+            is_re: is_re,
         };
         $.ajax({
             type: 'post',
@@ -225,6 +233,7 @@
                     document.getElementById('status_code').value = data['data'][4];
                     document.getElementById('response').value = data['data'][5];
                     document.getElementById('is_file').value = data['data'][6];
+                    document.getElementById('is_re').value = data['data'][7];
                     document.getElementById('Save').style.display = 'none';
                     document.getElementById('Update').style.display = '';
                 }

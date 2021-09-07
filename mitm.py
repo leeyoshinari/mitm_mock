@@ -113,19 +113,22 @@ class RequestEvent(object):
     def request(self, flow: mitmproxy.http.HTTPFlow):
         request_dict = {'method': '', 'scheme': '', 'hostname': '', 'port': 80, 'path': '',
                         'query': '', 'data': '', 'fragment': ''}
-        request_dict['method'] = flow.request.method  # 请求方式
+
         url_parse = urllib.parse.urlparse(flow.request.url)      # 解析url
+        request_dict['method'] = flow.request.method  # 请求方式
         request_dict['scheme'] = url_parse.scheme   # 协议
         request_dict['hostname'] = url_parse.hostname   # 域名
         request_dict['port'] = flow.request.port    # 端口
         request_dict['path'] = url_parse.path  # 请求路径
+
+        logger.info(f'{request_dict["scheme"]} - {request_dict["method"]} - {request_dict["hostname"]}:'
+                    f'{request_dict["port"]} - {request_dict["path"]}')
+
         request_dict['query'] = self.decode_query(urllib.parse.unquote(url_parse.query))  # URL中的请求参数
         request_dict['fragment'] = url_parse.fragment
         data = flow.request.get_text()
         request_dict['data'] = self.decode_data(data) if data else data # post请求的参数
 
-        logger.info(f'{request_dict["scheme"]} - {request_dict["method"]} - {request_dict["hostname"]}:'
-                    f'{request_dict["port"]} - {request_dict["path"]}')
         data = self.intercept(request_dict)
         if data:
             flow.response = http.Response.make(status_code=data['status_code'], content=data['content'])
@@ -138,8 +141,7 @@ class RequestEvent(object):
     def intercept(self, request_dict):
         """
         拦截
-        :param domain_name:
-        :param url_path:
+        :param request_dict:
         :return:
         """
         flag = 0    # Whether match mitm rule
@@ -149,20 +151,20 @@ class RequestEvent(object):
                 rule = self._data[i]
                 index = i
                 if rule[2] and rule[3]:
-                    if self.recompile(rule[2], request_dict["hostname"]):
+                    if self.recompile(rule[2], request_dict["hostname"], is_re=rule[7]):
                         flag = 1
                         break
-                    elif self.recompile(rule[3], request_dict["path"]):
+                    elif self.recompile(rule[3], request_dict["path"], is_re=rule[7]):
                         flag = 1
                         break
                     else:
                         continue
                 elif rule[2] and not rule[3]:
-                    if self.recompile(rule[2], request_dict["hostname"]):
+                    if self.recompile(rule[2], request_dict["hostname"], is_re=rule[7]):
                         flag = 1
                         break
                 elif rule[3] and not rule[2]:
-                    if self.recompile(rule[3], request_dict["path"]):
+                    if self.recompile(rule[3], request_dict["path"], is_re=rule[7]):
                         flag = 1
                         break
                 else:
@@ -188,9 +190,9 @@ class RequestEvent(object):
                 content = rule_data[5]
             try:
                 content = json.dumps(self.replace_param(json.loads(content), request_dict))
-            except:
-                logger.error(content)
-                logger.error(traceback.format_exc())
+            except Exception as err:
+                logger.error(err)
+                # logger.error(traceback.format_exc())
 
         except Exception as err:
             logger.error(traceback.format_exc())
@@ -233,22 +235,24 @@ class RequestEvent(object):
 
         return data
 
-    @staticmethod
-    def decode_data(data: str):
+    def decode_data(self, data: str):
         try:
             return json.loads(data)
-        except:
-            # logger.error(data)
+        except Exception as err:
+            logger.error(f'{err} -- {data}')
             # logger.error(traceback.format_exc())
-            return data
+            return self.decode_query(data)
 
     @staticmethod
-    def recompile(pattern, string):
-        res = re.search(pattern, string)
-        if res:
-            return True
+    def recompile(pattern, string, is_re = 1):
+        if is_re:
+            res = re.search(pattern, string)
+            if res:
+                return True
+            else:
+                return False
         else:
-            return False
+            return pattern == string
 
 
 class ProxyMaster(DumpMaster):
