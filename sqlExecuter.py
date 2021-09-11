@@ -60,6 +60,20 @@ def save(data):
     is_re = data.get('is_re')
     is_valid = 1
 
+    if is_file:
+        is_file = int(is_file)
+        if is_file < 0 or is_file > 1:
+            raise Exception("响应值是否是文件 的值必须是 0 或 1")
+    else:
+        is_file = 0
+
+    if is_re:
+        is_re = int(is_re)
+        if is_re < 0 or is_re > 1:
+            raise Exception("是否正则匹配规则 的值必须是 0 或 1")
+    else:
+        is_re = 1
+
     insert_date = (int(time.time()*1000), name, domain_name, url_path, status_code, response,
                    is_file, is_re, is_valid, int(time.time()))
     sql_con.cur.execute(INSERT_SQL.format(table_name, FIELD, insert_date))
@@ -78,6 +92,20 @@ def update(data):
     response = data.get('response')
     is_file = data.get('is_file')
     is_re = data.get('is_re')
+
+    if is_file:
+        is_file = int(is_file)
+        if is_file < 0 or is_file > 1:
+            raise Exception("响应值是否是文件 的值必须是 0 或 1")
+    else:
+        is_file = 0
+
+    if is_re:
+        is_re = int(is_re)
+        if is_re < 0 or is_re > 1:
+            raise Exception("是否正则匹配规则 的值必须是 0 或 1")
+    else:
+        is_re = 1
 
     update_date = f"name = '{name}', domain_name = '{domain_name}', url_path = '{url_path}', status_code = {status_code}, " \
                   f"response = '{response}', is_file = {is_file}, is_regular = {is_re}, update_time = {int(time.time())}"
