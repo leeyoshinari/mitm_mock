@@ -7,12 +7,12 @@
     <table width="100%" border="1" cellspacing="0" cellpadding="6" align="center" id="monitor" style="table-layout: fixed;">
         <tr style="align: center; margin: auto; background-color: #99CCFF">
             <!--<th width=10% style="text-align: center;">ID</th>-->
-            <th width=13% style="text-align: center;">name</th>
-            <th width=11% style="text-align: center;">domainName</th>
-            <th width=17% style="text-align: center;">urlPath</th>
-            <th width=10% style="text-align: center;">statusCode</th>
-            <th width=24% style="text-align: center;">response</th>
-            <th width=20% style="text-align: center;">manager</th>
+            <th width=18% style="text-align: center;">name</th>
+            <th width=17% style="text-align: center;">domainName</th>
+            <th width=28% style="text-align: center;">urlPath</th>
+            <th width=15% style="text-align: center;">mitmMode</th>
+            <!--th width=24% style="text-align: center;">response</th-->
+            <th width=22% style="text-align: center;">manager</th>
         </tr>
         {% for data in datas %}
             <tr>
@@ -20,10 +20,10 @@
                 <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[1] }}">{{ data[1] }}</td>
                 <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[2] }}">{{ data[2] }}</td>
                 <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[3] }}">{{ data[3] }}</td>
-                <td align="center">{{ data[4]}}</td>
-                <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[5] }}">{{ data[5]}}</td>
+                <!--td align="center">{{ data[4]}}</td-->
+                <td align="center" title="{{ data[8] }}">{{ ["直接拦截请求", "篡改请求参数", "篡改响应值"][data[8]] }}</td>
                 <td align="center">
-                    {% if data[8] > 0 %}
+                    {% if data[9] > 0 %}
                     <input name="{{ data[0] }}" type="radio" value="1" checked onclick="set_is_run('{{ data[0] }}', 1)">启用
                     <input name="{{ data[0] }}" type="radio" value="0" onclick="set_is_run('{{ data[0] }}', 0)">禁用
                     {% else %}
@@ -59,23 +59,41 @@
             <input type="text" id="url_path" placeholder="拦截路径，正则表达式匹配，例如：/static.*json" style="margin-left: 3%; width: 80%;">
         </div>
         <div style="max-width: 100%; margin-top: 3%;">
+            <label style="width: 15%; text-align: right;">匹配方式: </label>
+            <select id="is_re" onchange="" style="margin-left: 3%; width: 80%;">
+                <option value="0">使用 “=” 匹配域名或路径</option>
+                <option value="1" selected="selected">正则表达式匹配域名或路径</option>
+            </select>
+        </div>
+        <div style="max-width: 100%; margin-top: 3%;">
+            <label style="width: 15%; text-align: right;">拦截方式: </label>
+            <select id="method" onchange="changeMethod()" style="margin-left: 3%; width: 80%;">
+                <option value="0" selected="selected">直接拦截请求</option>
+                <option value="1">篡改请求参数</option>
+                <option value="2">篡改响应值</option>
+            </select>
+        </div>
+        <div id="STATUS" style="max-width: 100%; margin-top: 3%;">
             <label style="width: 15%; text-align: right;">状态码: </label>
             <input type="text" id="status_code" placeholder="响应状态码" style="margin-left: 3%; width: 80%;">
         </div>
-        <div style="max-width: 100%; margin-top: 3%;">
+        <div id="RESPONSE" style="max-width: 100%; margin-top: 3%;">
             <label style="width: 15%; text-align: right; float: left;">响应值: </label>
-            <textarea id="response" placeholder="响应值" style="margin-left: 3%; width: 80%;" rows="4"></textarea>
+            <textarea id="response" placeholder="响应值，可填写需要返回的字符串，或者存放返回值的文件路径" style="margin-left: 3%; width: 80%;" rows="4"></textarea>
         </div>
-        <div style="max-width: 100%; margin-top: 3%;">
+        <div id="FIELD" style="max-width: 100%; margin-top: 3%; display: none">
+            <label style="width: 15%; text-align: right; float: left;">篡改字段: </label>
+            <textarea id="fields" placeholder="GET请求仅支持带“?”的传参方式，POST请求仅支持Json格式" style="margin-left: 3%; width: 80%;" rows="4"></textarea>
+        </div>
+        <div id="ISRESPONSE" style="max-width: 100%; margin-top: 3%;">
             <label style="width: 25%; text-align: left;">响应值是否是文件: </label>
-            <input type="text" id="is_file" placeholder="响应值是否是文件, 0是字符串 或者 1是文件路径" style="margin-left: 3%; width: 70%;">
-        </div>
-        <div style="max-width: 100%; margin-top: 3%;">
-            <label style="width: 25%; text-align: left;">是否正则匹配规则: </label>
-            <input type="text" id="is_re" placeholder="是否使用正则匹配域名或路径, 0 或者 1" style="margin-left: 3%; width: 70%;">
+            <select id="is_file" style="margin-left: 3%; width: 70%;">
+                <option value="0" selected="selected">响应值中的内容是需要返回的字符串</option>
+                <option value="1">响应值中的内容是存放返回值的文件路径</option>
+            </select>
         </div>
         <div style="text-align: center; margin-top: 5%;">
-            <button id="Save" style="width: 30%; display: ">保存</button>
+            <button id="Save" style="width: 30%;">保存</button>
             <button id="Update" style="width: 30%; display: none">更新</button>
         </div>
     </div>
@@ -86,6 +104,21 @@
     window.onload = function() {
         let height = window.outerHeight;
         let width = window.outerWidth;
+    }
+    function changeMethod() {
+        let methodValue = document.getElementById('method').value;
+        if(methodValue === '0'){
+            document.getElementById('STATUS').style.display = '';
+            document.getElementById('RESPONSE').style.display = '';
+            document.getElementById('ISRESPONSE').style.display = '';
+            document.getElementById('FIELD').style.display = 'none';
+        }
+        if(methodValue !== '0'){
+            document.getElementById('STATUS').style.display = 'none';
+            document.getElementById('RESPONSE').style.display = 'none';
+            document.getElementById('ISRESPONSE').style.display = 'none';
+            document.getElementById('FIELD').style.display = '';
+        }
     }
     $("#Reload").click(function () {
         $.ajax ({
@@ -110,6 +143,8 @@
         let response = document.getElementById('response').value;
         let is_file = document.getElementById('is_file').value;
         let is_re = document.getElementById('is_re').value;
+        let method = document.getElementById('method').value;
+        let fields = document.getElementById('fields').value;
         let postdata = {
             name: name,
             domain_name: domain_name,
@@ -118,6 +153,8 @@
             response: response,
             is_file: is_file,
             is_re: is_re,
+            method: method,
+            fields: fields,
         };
         $.ajax({
             type: 'post',
@@ -145,6 +182,8 @@
         let response = document.getElementById('response').value;
         let is_file = document.getElementById('is_file').value;
         let is_re = document.getElementById('is_re').value;
+        let method = document.getElementById('method').value;
+        let fields = document.getElementById('fields').value;
         let postdata = {
             ID: ID,
             name: name,
@@ -154,6 +193,8 @@
             response: response,
             is_file: is_file,
             is_re: is_re,
+            method: method,
+            fields: fields,
         };
         $.ajax({
             type: 'post',
@@ -230,10 +271,50 @@
                     document.getElementById('name').value = data['data'][1];
                     document.getElementById('domain_name').value = data['data'][2];
                     document.getElementById('url_path').value = data['data'][3];
-                    document.getElementById('status_code').value = data['data'][4];
-                    document.getElementById('response').value = data['data'][5];
-                    document.getElementById('is_file').value = data['data'][6];
-                    document.getElementById('is_re').value = data['data'][7];
+                    if(data['data'][7] === 0){
+                        document.getElementById('is_re').options[0].selected = true;
+                        document.getElementById('is_re').options[1].selected = false;
+                    } else {
+                        document.getElementById('is_re').options[1].selected = true;
+                        document.getElementById('is_re').options[0].selected = false;
+                    }
+
+                    if(data['data'][8] === 0){
+                        document.getElementById('method').options[0].selected = true;
+                        document.getElementById('method').options[1].selected = false;
+                        document.getElementById('method').options[2].selected = false;
+                        document.getElementById('STATUS').style.display = '';
+                        document.getElementById('RESPONSE').style.display = '';
+                        document.getElementById('ISRESPONSE').style.display = '';
+                        document.getElementById('FIELD').style.display = 'none';
+
+                        document.getElementById('status_code').value = data['data'][4];
+                        document.getElementById('response').value = data['data'][5];
+
+                        if(data['data'][6] === 0){
+                            document.getElementById('is_file').options[0].selected = true;
+                            document.getElementById('is_file').options[1].selected = false;
+                        } else {
+                            document.getElementById('is_file').options[1].selected = true;
+                            document.getElementById('is_file').options[0].selected = false;
+                        }
+                    } else {
+                        document.getElementById('method').options[0].selected = false;
+                        if(data['data'][8] === 1) {
+                            document.getElementById('method').options[1].selected = true;
+                            document.getElementById('method').options[2].selected = false;
+                        }
+                        if(data['data'][8] === 2) {
+                            document.getElementById('method').options[2].selected = true;
+                            document.getElementById('method').options[1].selected = false;
+                        }
+
+                        document.getElementById('STATUS').style.display = 'none';
+                        document.getElementById('RESPONSE').style.display = 'none';
+                        document.getElementById('ISRESPONSE').style.display = 'none';
+                        document.getElementById('FIELD').style.display = '';
+                        document.getElementById('fields').value = data['data'][5];
+                    }
                     document.getElementById('Save').style.display = 'none';
                     document.getElementById('Update').style.display = '';
                 }
