@@ -4,9 +4,11 @@
 ### 功能
 1、自定义http协议拦截规则，支持通过域名和url路径拦截<br>
 2、支持设置自定义响应的状态码<br>
-3、响应值可设置成任意字符串，支持设置读取本地文件的路径<br>
-4、修改规则后，支持手动加载使规则生效<br>
-5、使用sqlite数据库储存规则<br>
+3、支持篡改请求参数<br>
+4、支持篡改响应值<br>
+5、响应值可设置成任意字符串，支持设置读取本地文件的路径<br>
+6、修改规则后，支持手动加载使规则生效<br>
+7、使用sqlite数据库储存规则<br>
 
 ### 实现
 1、启动两个进程，主进程用于拦截，子进程用于提供web服务<br>
@@ -49,7 +51,9 @@ pyinstaller -F mitm.py -p sqlite.py -p sqlExecuter.py -p config.py --hidden-impo
 # 注意
 1、每次mock时，需开启系统代理；mock完成后，须关闭代理；
 
-2、如果需要拦截（mock）https的请求，需要安装证书，其他操作和http的基本一样；证书在用户目录下的 .mitmproxy 文件夹中，安装 mitmproxy-ca-cert.cer。
+2、由于该工具是拦截 http 请求，所以拦截时，目标IP地址和目标端口必须存在，必须能够完成 TCP 三次握手；
+
+3、如果需要拦截（mock）https的请求，需要安装证书，其他操作和http的基本一样；证书在用户目录下的 .mitmproxy 文件夹中，安装 mitmproxy-ca-cert.cer。
 
 # Requirements
 1、mitmproxy<br>

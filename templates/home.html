@@ -21,7 +21,7 @@
                 <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[2] }}">{{ data[2] }}</td>
                 <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[3] }}">{{ data[3] }}</td>
                 <!--td align="center">{{ data[4]}}</td-->
-                <td align="center" title="{{ data[8] }}">{{ ["直接拦截请求", "篡改请求参数", "篡改响应值"][data[8]] }}</td>
+                <td align="center" title="{{ data[8] }}">{{ ["直接拦截请求", "篡改请求参数", "篡改响应值", "请求响应都篡改"][data[8]] }}</td>
                 <td align="center">
                     {% if data[9] > 0 %}
                     <input name="{{ data[0] }}" type="radio" value="1" checked onclick="set_is_run('{{ data[0] }}', 1)">启用
@@ -71,6 +71,7 @@
                 <option value="0" selected="selected">直接拦截请求</option>
                 <option value="1">篡改请求参数</option>
                 <option value="2">篡改响应值</option>
+                <option value="3">请求响应都篡改</option>
             </select>
         </div>
         <div id="STATUS" style="max-width: 100%; margin-top: 3%;">
@@ -283,6 +284,7 @@
                         document.getElementById('method').options[0].selected = true;
                         document.getElementById('method').options[1].selected = false;
                         document.getElementById('method').options[2].selected = false;
+                        document.getElementById('method').options[3].selected = false;
                         document.getElementById('STATUS').style.display = '';
                         document.getElementById('RESPONSE').style.display = '';
                         document.getElementById('ISRESPONSE').style.display = '';
@@ -303,10 +305,17 @@
                         if(data['data'][8] === 1) {
                             document.getElementById('method').options[1].selected = true;
                             document.getElementById('method').options[2].selected = false;
+                            document.getElementById('method').options[3].selected = false;
                         }
                         if(data['data'][8] === 2) {
                             document.getElementById('method').options[2].selected = true;
                             document.getElementById('method').options[1].selected = false;
+                            document.getElementById('method').options[3].selected = false;
+                        }
+                        if(data['data'][8] === 3) {
+                            document.getElementById('method').options[3].selected = true;
+                            document.getElementById('method').options[1].selected = false;
+                            document.getElementById('method').options[2].selected = false;
                         }
 
                         document.getElementById('STATUS').style.display = 'none';

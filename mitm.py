@@ -123,19 +123,20 @@ class RequestEvent(object):
 
         result = self.intercept(request_dict)
         if result['flag']:  # http请求命令拦截规则
-            request_dict['query'] = self.decode_query(urllib.parse.unquote(url_parse.query))  # URL中的请求参数
-            request_dict['fragment'] = url_parse.fragment
-            data = flow.request.get_text()
-            request_dict['origin_data'] = data
-            request_dict['data'] = self.decode_data(data) if data else data # post请求的参数
-            logger.debug(f"URL中的请求参数处理后的数据为：{request_dict['query']}")
-            logger.debug(f"POST请求体中的参数处理后的数据为：{request_dict['data']}")
-
             if result['rule_data'][8] == 0: # 直接拦截
+                request_dict['query'] = self.decode_query(urllib.parse.unquote(url_parse.query))  # URL中的请求参数
+                request_dict['fragment'] = url_parse.fragment
+                data = flow.request.get_text()
+                request_dict['data'] = self.decode_data(data) if data else data  # post请求的参数
+                logger.debug(f"URL中的请求参数处理后的数据为：{request_dict['query']}")
+                logger.debug(f"POST请求体中的参数处理后的数据为：{request_dict['data']}")
+
                 data = self.return_response(result['rule_data'], request_dict)
                 flow.response = http.Response.make(status_code=data['status_code'], content=data['content'])
                 logger.info(f"{request_dict['url']} 已被直接拦截")
+
             if result['rule_data'][8] == 1:  # 修改请求参数
+                request_dict['origin_data'] = flow.request.get_text()
                 url, data = self.falsify_request(result['rule_data'][5], request_dict)
                 flow.request.url = url
                 flow.request.text = data
@@ -150,8 +151,8 @@ class RequestEvent(object):
 
         result = self.intercept(response_dict)
         if result['flag']:  # http请求命令拦截规则
-            response_dict['data'] = flow.response.get_text()
-            if result['rule_data'][8] == 2:  # 修改响应值
+            if result['rule_data'][8] == 1:  # 修改响应值
+                response_dict['data'] = flow.response.get_text()
                 data = self.falsify_response(result['rule_data'][5], response_dict)
                 flow.response.text = data
                 logger.info(f"{response_dict['url']} 响应值已篡改完成")
@@ -225,8 +226,8 @@ class RequestEvent(object):
         """
         try:
             fields = json.loads(fields)
-            url_dict = fields.get('url')
-            body_dict = fields.get('body')
+            url_dict = fields.get('resquestUrl')
+            body_dict = fields.get('requestBody')
             if url_dict:
                 for k, v in url_dict.items():
                     url = self.tamper_url(k, v, request_dict['url'])
@@ -249,10 +250,6 @@ class RequestEvent(object):
     def tamper_body(self, key, value, data, is_request = True):
         try:
             data_dic = json.loads(data)
-            try:
-                value = json.loads(value)
-            except:
-                pass
             keys = [self.str_2_num(k) for k in key.split('.')]
             self.get_dict(keys, value, data_dic)
             return json.dumps(data_dic)
@@ -273,9 +270,11 @@ class RequestEvent(object):
         """
         try:
             fields = json.loads(fields)
-            for k, v in fields.items():
-                data = self.tamper_body(k, v, response_dict['data'], is_request=False)
-                response_dict['data'] = data
+            res_dict = fields.get('responseBody')
+            if res_dict:
+                for k, v in fields.items():
+                    data = self.tamper_body(k, v, response_dict['data'], is_request=False)
+                    response_dict['data'] = data
         except:
             logger.error(traceback.format_exc())
         return response_dict['data']
