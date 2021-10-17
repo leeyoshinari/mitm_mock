@@ -36,6 +36,10 @@ class SERVER(object):
                                                                              'context': getConfig('context')})
 
     @staticmethod
+    async def course(request):
+        return aiohttp_jinja2.render_template('course.html', request, context={'context':getConfig("context")})
+
+    @staticmethod
     async def isRun(request):
         try:
             data = json.loads(await request.text())
@@ -66,6 +70,9 @@ class SERVER(object):
     async def update(request):
         try:
             data = json.loads(await request.text())
+            if data.get('method') != '0':
+                if not isinstance(json.loads(data.get('fields')), dict):
+                    raise Exception('篡改字段的值不是合法的Json')
             sqlExecuter.update(data)
             return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
         except Exception as err:
@@ -76,6 +83,9 @@ class SERVER(object):
     async def save(request):
         try:
             data = json.loads(await request.text())
+            if data.get('method') != '0':
+                if not isinstance(json.loads(data.get('fields')), dict):
+                    raise Exception('篡改字段的值不是合法的Json')
             sqlExecuter.save(data)
             return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
         except Exception as err:
@@ -272,7 +282,7 @@ class RequestEvent(object):
             fields = json.loads(fields)
             res_dict = fields.get('responseBody')
             if res_dict:
-                for k, v in fields.items():
+                for k, v in res_dict.items():
                     data = self.tamper_body(k, v, response_dict['data'], is_request=False)
                     response_dict['data'] = data
         except:
@@ -284,7 +294,11 @@ class RequestEvent(object):
             data[keys[0]] = value
         else:
             k = keys.pop(0)
-            return self.get_dict(keys, value, data[k])
+            try:
+                return self.get_dict(keys, value, data[k])
+            except:
+                logger.error(traceback.format_exc())
+                data[k] = value
 
     @staticmethod
     def str_2_num(value: str):
@@ -367,6 +381,7 @@ async def app_server(q):
                           append_version=True)  # Add static files to the search path
 
     app.router.add_route('GET', f'{getConfig("context")}', s.home)
+    app.router.add_route('GET', f'{getConfig("context")}/course', s.course)
     app.router.add_route('POST', f'{getConfig("context")}/isRun', s.isRun)
     app.router.add_route('GET', f'{getConfig("context")}/delete/{{Id}}', s.delete)
     app.router.add_route('GET', f'{getConfig("context")}/edit/{{Id}}', s.edit)
