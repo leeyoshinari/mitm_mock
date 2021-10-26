@@ -22,7 +22,7 @@
                 <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[2] }}">{{ data[2] }}</td>
                 <td style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;" title="{{ data[3] }}">{{ data[3] }}</td>
                 <!--td align="center">{{ data[4]}}</td-->
-                <td align="center" title="{{ data[8] }}">{{ ["直接拦截请求", "篡改请求参数", "篡改响应值", "请求响应都篡改"][data[8]] }}</td>
+                <td align="center" title="{{ data[8] }}">{{ ["直接拦截请求", "篡改请求或响应", "篡改响应值", "请求响应都篡改"][data[8]] }}</td>
                 <td align="center">
                     {% if data[9] > 0 %}
                     <input name="{{ data[0] }}" type="radio" value="1" checked onclick="set_is_run('{{ data[0] }}', 1)">启用

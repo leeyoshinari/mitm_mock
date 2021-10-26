@@ -36,7 +36,7 @@ git clone https://github.com/leeyoshinari/mitm_mock.git
 5、启动 `python3 mitm.py`
 
 6、设置系统代理<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Windows设置方法：打开“设置——>网络和Internet——>代理——>手动设置代理”<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Windows设置方法：`打开“设置——>网络和Internet——>代理——>手动设置代理”`<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Linux设置方法：`export http_proxy=http://ip:port`<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mac设置方法：`打开“系统偏好设置——>网络——>高级——>代理——>网页代理(HTTP) 或 安全网页代理(HTTPS)”`<br>
 <br>

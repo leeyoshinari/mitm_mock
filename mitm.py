@@ -75,6 +75,8 @@ class SERVER(object):
                     raise Exception('篡改字段的值不是合法的Json')
             sqlExecuter.update(data)
             return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
+        except json.JSONDecodeError:
+            return web.json_response({'code': 0, 'msg': '篡改字段的值不是合法的Json', 'data': None})
         except Exception as err:
             logger.error(traceback.format_exc())
             return web.json_response({'code': 0, 'msg': str(err), 'data': None})
@@ -88,6 +90,8 @@ class SERVER(object):
                     raise Exception('篡改字段的值不是合法的Json')
             sqlExecuter.save(data)
             return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
+        except json.JSONDecodeError:
+            return web.json_response({'code': 0, 'msg': '篡改字段的值不是合法的Json', 'data': None})
         except Exception as err:
             return web.json_response({'code': 0, 'msg': str(err), 'data': None})
 
