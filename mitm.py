@@ -240,12 +240,12 @@ class RequestEvent(object):
         """
         try:
             fields = json.loads(fields)
-            url_dict = fields.get('resquestUrl')
+            url_dict = fields.get('requestUrl')
             body_dict = fields.get('requestBody')
             if url_dict:
                 for k, v in url_dict.items():
-                    url = self.tamper_url(k, v, request_dict['url'])
-                    request_dict['url'] = urllib.parse.quote(url)
+                    url = self.tamper_url(k, urllib.parse.quote(v), request_dict['url'])
+                    request_dict['url'] = url
 
             if body_dict:
                 for k, v in body_dict.items():
@@ -415,7 +415,7 @@ def main():
     r_e = RequestEvent(q)
     proxy.addons.add(r_e)
     proxy.start_run()
-
+#mitmproxy  -p 8080 --set block_global=false
 
 if __name__ == '__main__':
     main()
