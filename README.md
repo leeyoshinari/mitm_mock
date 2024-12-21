@@ -7,15 +7,7 @@
 1、自定义http协议拦截规则，支持通过域名和url路径拦截<br>
 2、可设置任意状态码，响应值可设置成任意字符串，支持设置读取本地文件的路径<br>
 3、支持篡改请求参数，或篡改响应值<br>
-4、修改规则后，支持手动加载使规则即时生效<br>
-5、使用sqlite数据库储存规则<br>
-
-### 实现
-1、启动两个进程，主进程用于拦截，子进程用于提供web服务<br>
-2、拦截工具：mitmproxy<br>
-3、web框架：aiohttp<br>
-4、进程间通信：queue <br>
-5、数据库：sqlite <br>
+4、使用sqlite数据库储存规则<br>
 
 # 使用
 1、克隆
@@ -33,7 +25,7 @@ git clone https://github.com/leeyoshinari/mitm_mock.git
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Linux 将 mitmproxy 的可执行文件软连接到 /usr/bin/mitmproxy<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Mac 将 mitmproxy 的可执行文件软连接到 /usr/local/bin/mitmproxy<br>
 
-5、启动 `python3 mitm.py`
+5、启动 `python3 server.py`，开启前端规则配置页面
 
 6、设置系统代理<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Windows设置方法：`打开“设置——>网络和Internet——>代理——>手动设置代理”`<br>
@@ -49,21 +41,16 @@ git clone https://github.com/leeyoshinari/mitm_mock.git
 &nbsp;&nbsp;&nbsp;&nbsp;添加/编辑拦截规则，使拦截规则生效<br>
 ![](https://github.com/leeyoshinari/mitm_mock/blob/main/static/shoot.jpg)
 
-# 打包
-本地使用可不用打包，如需发布到其他电脑/服务器上运行，可使用pyinstaller打包，打包命令：
-```shell script
-pyinstaller -F mitm.py -p sqlite.py -p sqlExecuter.py -p config.py --hidden-import sqlite --hidden-import sqlExecuter --hidden-import config
-```
-打包完成后，在当前路径下会生成dist文件夹，进入`dist`即可找到可执行文件；将`config.ini`、`static`、`templates`文件和打包生产的可执行文件放在同一路径下即可
+8、所有规则配置完成后，执行 `python3 mitm.py` 就可以拦截和篡改请求了，这里只获取“启用”的规则。每次修改完规则，需要重新执行 `python3 mitm.py`
 
 # 注意
 1、每次mock时，需开启系统代理；mock完成后，须关闭代理；
 
 2、由于该工具是拦截 http 请求，所以拦截时，目标IP地址和目标端口必须存在，必须能够完成 TCP 三次握手；
 
-3、如果需要拦截（mock）https的请求，需要安装证书，其他操作和http的基本一样；证书在用户目录下的 .mitmproxy 文件夹中，安装 mitmproxy-ca-cert.cer。
+3、如果需要拦截（mock）https的请求，需要安装证书，其他操作和http的基本一样；证书在用户目录下的 .mitmproxy 文件夹中，安装 mitmproxy-ca-cert.cer，且必须信任该证书。
 
 # Requirements
-1、python 3.7+<br>
+1、python 3.11+<br>
 2、mitmproxy<br>
 3、aiohttp<br>

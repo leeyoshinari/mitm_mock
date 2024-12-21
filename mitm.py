@@ -4,118 +4,22 @@
 
 import os
 import re
-import time
 import json
 import asyncio
 import traceback
-import threading
 import urllib.parse
 import mitmproxy.http
-from multiprocessing import Process, Queue
 from mitmproxy.options import Options
 from mitmproxy.tools.dump import DumpMaster
 from mitmproxy import ctx, http
-import jinja2
-import aiohttp_jinja2
-from aiohttp import web
 from config import getConfig
 from logger import logger
 import sqlExecuter
 
 
-q = Queue()
-
-
-class SERVER(object):
-    def __init__(self, q):
-        self.q = q
-
-    @staticmethod
-    async def home(request):
-        return aiohttp_jinja2.render_template('home.html', request, context={'datas': sqlExecuter.home(request),
-                                                                             'context': getConfig('context')})
-
-    @staticmethod
-    async def course(request):
-        return aiohttp_jinja2.render_template('course.html', request, context={'context':getConfig("context")})
-
-    @staticmethod
-    async def isRun(request):
-        try:
-            data = json.loads(await request.text())
-            sqlExecuter.isRun(data)
-            return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
-        except Exception as err:
-            return web.json_response({'code': 0, 'msg': str(err), 'data': None})
-
-    @staticmethod
-    async def delete(request):
-        try:
-            ID = request.match_info['Id']
-            sqlExecuter.delete(ID)
-            return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
-        except Exception as err:
-            return web.json_response({'code': 0, 'msg': str(err), 'data': None})
-
-    @staticmethod
-    async def edit(request):
-        try:
-            ID = request.match_info['Id']
-            data = sqlExecuter.edit(ID)
-            return web.json_response({'code': 1, 'msg': 'successful', 'data': data})
-        except Exception as err:
-            return web.json_response({'code': 0, 'msg': str(err), 'data': None})
-
-    @staticmethod
-    async def update(request):
-        try:
-            data = json.loads(await request.text())
-            if data.get('method') != '0':
-                if not isinstance(json.loads(data.get('fields')), dict):
-                    raise Exception('篡改字段的值不是合法的Json')
-            sqlExecuter.update(data)
-            return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
-        except json.JSONDecodeError:
-            return web.json_response({'code': 0, 'msg': '篡改字段的值不是合法的Json', 'data': None})
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            return web.json_response({'code': 0, 'msg': str(err), 'data': None})
-
-    @staticmethod
-    async def save(request):
-        try:
-            data = json.loads(await request.text())
-            if data.get('method') != '0':
-                if not isinstance(json.loads(data.get('fields')), dict):
-                    raise Exception('篡改字段的值不是合法的Json')
-            sqlExecuter.save(data)
-            return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
-        except json.JSONDecodeError:
-            return web.json_response({'code': 0, 'msg': '篡改字段的值不是合法的Json', 'data': None})
-        except Exception as err:
-            return web.json_response({'code': 0, 'msg': str(err), 'data': None})
-
-    async def reload(self, request):
-        try:
-            self.q.put(sqlExecuter.reload(request))
-            return web.json_response({'code': 1, 'msg': 'successful', 'data': None})
-        except Exception as err:
-            return web.json_response({'code': 0, 'msg': str(err), 'data': None})
-
-
 class RequestEvent(object):
-    def __init__(self, q):
-        self._data = []
-        self.q = q
-
-        thread_01 = threading.Thread(target=self.get_queue)
-        thread_01.setDaemon(True)
-        thread_01.start()
-
-    def get_queue(self):
-        while True:
-            self._data = self.q.get()
-            time.sleep(1)
+    def __init__(self):
+        self._data = sqlExecuter.reload()
 
     def http_connect(self, flow: mitmproxy.http.HTTPFlow):
         pass
@@ -365,57 +269,16 @@ class RequestEvent(object):
             return pattern == string
 
 
-class ProxyMaster(DumpMaster):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def start_run(self):
-        try:
-            DumpMaster.run(self)
-        except KeyboardInterrupt:
-            self.shutdown()
-
-
-async def app_server(q):
-    s = SERVER(q)
-    app = web.Application()
-    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('templates'))  # Add template to search path
-    app.router.add_static(f'{getConfig("context")}/static',
-                          path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static'),
-                          append_version=True)  # Add static files to the search path
-
-    app.router.add_route('GET', f'{getConfig("context")}', s.home)
-    app.router.add_route('GET', f'{getConfig("context")}/course', s.course)
-    app.router.add_route('POST', f'{getConfig("context")}/isRun', s.isRun)
-    app.router.add_route('GET', f'{getConfig("context")}/delete/{{Id}}', s.delete)
-    app.router.add_route('GET', f'{getConfig("context")}/edit/{{Id}}', s.edit)
-    app.router.add_route('POST', f'{getConfig("context")}/update', s.update)
-    app.router.add_route('GET', f'{getConfig("context")}/reload', s.reload)
-    app.router.add_route('POST', f'{getConfig("context")}/save', s.save)
-
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, getConfig('host'), getConfig('port'))
-    await site.start()
-
-
-def main_server(q):
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(app_server(q))
-    loop.run_forever()
-
-
-def main():
-    process_1 = Process(target=main_server, args=(q,))
-    process_1.daemon = True
-    process_1.start()
-
+async def main():
     options = Options(listen_host=getConfig('proxy_host'), listen_port=int(getConfig('proxy_port')), http2=True)
-    proxy = ProxyMaster(options, with_termlog=False, with_dumper=False)
-    r_e = RequestEvent(q)
+    proxy = DumpMaster(options, with_termlog=False, with_dumper=False)
+    r_e = RequestEvent()
     proxy.addons.add(r_e)
-    proxy.start_run()
-#mitmproxy  -p 8080 --set block_global=false
+    try:
+        await proxy.run()
+    except KeyboardInterrupt:
+        proxy.shutdown()
+
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())

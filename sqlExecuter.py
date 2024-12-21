@@ -16,6 +16,7 @@ DELETE_SQL = "DELETE FROM {} WHERE id = {};"
 EDIT_SQL = "SELECT * FROM {} WHERE id = {};"
 FIELD = ("id", "name", "domain_name", "url_path", "status_code", "response", "is_file", "is_regular", "method", "is_valid", "update_time")
 
+
 def home(request):
     sql_con = Sqlite()
     sql_con.cur.execute(SELECT_SQL.format(table_name))
@@ -91,9 +92,9 @@ def update(data):
     del sql_con
 
 
-def reload(request):
+def reload():
     sql_con = Sqlite()
-    sql_con.cur.execute("SELECT * FROM {} WHERE is_valid = 1 ORDER BY UPDATE_TIME DESC;".format(table_name))
+    sql_con.cur.execute("SELECT * FROM {} WHERE is_valid = 1;".format(table_name))
     data = sql_con.cur.fetchall()
     del sql_con
     return data
