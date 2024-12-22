@@ -15,66 +15,6 @@
             5、使用sqlite数据库储存规则<br>
         </p>
     </ol><br>
-    <h4>实现</h4>
-    <ol>
-        <p>
-            1、启动两个进程，主进程用于拦截，子进程用于提供web服务<br>
-            2、拦截工具：mitmproxy<br>
-            3、web框架：aiohttp<br>
-            4、进程间通信：queue <br>
-            5、数据库：sqlite <br>
-        </p>
-    </ol><br>
-    <h2>部署</h2>
-    <ol>
-        <li>
-            <p>克隆项目</p>
-            <pre><code><span>git</span> clone https://github.com/leeyoshinari/mitm_mock.git</code></pre>
-        </li>
-        <li>
-            <p>修改配置文件 <code>config.ini</code></p>
-        </li><br>
-        <li>
-            <p>安装依赖包 <code>pip3 install -r requirements.txt</code></p>
-            <p>Mac 需要最新版的pip，如果不是最新版本的pip，请先升级pip，执行命令<code>pip3 install --upgrade pip</code></p>
-        </li><br>
-        <li>
-            <p>配置mitmproxy环境变量<br>
-                Windows 在环境变量的 path 中添加 mitmproxy 的可执行文件路径<br>
-                Linux 将 mitmproxy 的可执行文件软连接到 /usr/bin/mitmproxy<br>
-                Mac 将 mitmproxy 的可执行文件软连接到 /usr/local/bin/mitmproxy<br>
-            </p>
-        </li><br>
-        <li>
-            <p>启动<br>
-            <pre><code><span>nohup</span> python3 mitm.py <span>&amp;</span></code></pre></p>
-        </li><br>
-        <li>
-            <p>设置系统代理<br>
-                Windows 设置方法：打开 “设置——>网络和Internet——>代理——>手动设置代理” <br>
-                Linux 设置方法：<code>export http_proxy=http://127.0.0.1:12021</code><br>
-                Mac 设置方法：打开 “系统偏好设置——>网络——>高级——>代理——>网页代理(HTTP) 或 安全网页代理(HTTPS)”<br>
-            </p>
-        </li><br>
-        <li>
-            <p>访问<br>
-            访问页面 <code>http://IP:PORT/context</code>(配置文件中的context)
-            </p>
-        </li><br>
-        <li>
-            <p>取消代理设置<br>
-                Windows 取消方法：直接在“手动设置代理”的地方关闭即可<br>
-                Linux 取消方法：<code>unset http_proxy</code><br>
-                Mac 取消方法：直接在“代理”页面关闭即可<br>
-            </p>
-        </li>
-    </ol><br>
-    <h2>打包</h2>
-    <p>&ensp;&ensp;&ensp;&ensp;本地使用可不用打包，如需发布到其他电脑/服务器上运行，可使用 pyinstaller 打包成可执行文件；pyinstaller 打包命令如下</p>
-            &ensp;&ensp;&ensp;&ensp;<pre><code>pyinstaller -F mitm.py -p sqlite.py -p sqlExecuter.py -p config.py --hidden-import sqlite --hidden-import sqlExecuter --hidden-import config</code></pre>
-            <p>
-                &ensp;&ensp;&ensp;&ensp;打包完成后，在当前路径下会生成 dist 文件夹，进入<code>dist</code>即可找到可执行文件；将<code>config.ini</code>、<code>static</code>、<code>templates</code>文件和可执行文件放在同一路径下即可
-            </p><br>
     <h2>使用</h2>
     <ol>
         <li>
